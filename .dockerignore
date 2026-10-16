@@ -1,0 +1,14 @@
+.venv
+.git
+.env
+.env.*
+frontend/node_modules
+frontend/dist
+frontend/test-results
+frontend/playwright-report
+frontend/tsconfig.tsbuildinfo
+docs/*.png
+**/__pycache__
+**/*.sqlite3
+backend/staticfiles
+fs-assessment-spotter.pdf
