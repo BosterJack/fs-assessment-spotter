@@ -4,26 +4,28 @@ Application du test **Full Stack Developer / Weather-Aware Truck Routing** : fro
 
 [Aperçu ordinateur](docs/desktop.png) · [Aperçu mobile](docs/mobile.png) · [Vérifications effectuées](docs/VERIFICATION.md)
 
-## Démarrage rapide sous Windows
+## Démarrage avec Docker
 
-Prérequis : **Docker Desktop avec Docker Compose**. Python et Node.js ne sont pas nécessaires sur Windows pour ce lancement.
+Prérequis : **Docker Engine avec Docker Compose** sur Linux, ou Docker Desktop pour un poste de développement. Python, Node.js et PowerShell ne sont pas nécessaires sur la machine de déploiement.
 
-```powershell
-cd E:\Project\fs-assessment-spotter
-.\start.ps1
+```bash
+cp .env.example .env
+# Remplacer DJANGO_SECRET_KEY par une valeur aléatoire dans .env.
+docker compose build backend
+docker compose build frontend
+docker compose up -d --no-build --wait
 ```
 
-Ouvrir **http://127.0.0.1:8080** (ou le port `FRONTEND_PORT` de `.env`). Le script crée `.env` avec une clé aléatoire si ce fichier n’existe pas, tente de démarrer Docker Desktop si nécessaire, puis lance React/Nginx et Django/Gunicorn avec Docker Compose. Il attend que les deux services soient sains avant d’afficher l’URL. Le fichier `.env` existant est conservé et ses secrets ne sont pas affichés.
+Ouvrir **http://127.0.0.1:8080** (ou le port `FRONTEND_PORT` de `.env`). Les services sont séparés : `backend/Dockerfile` construit uniquement Django/Gunicorn ; `frontend/Dockerfile` compile React et sert ses fichiers avec Nginx. Le frontend transmet `/api/` au backend sur le réseau Docker.
 
-Les conteneurs fonctionnent en arrière-plan après la fin du script. Les images sont construites automatiquement au premier lancement, puis réutilisées ; les constructions sont séquentielles par défaut pour limiter la mémoire utilisée. Après modification du code, reconstruire explicitement :
+Les conteneurs fonctionnent en arrière-plan. Les deux commandes de construction sont séparées pour limiter la mémoire utilisée. Aux lancements suivants, réutiliser les images avec `docker compose up -d --no-build --wait`. Après modification du code, reconstruire les images concernées.
 
-```powershell
-.\start.ps1 -Rebuild
+```bash
 docker compose logs -f
 docker compose down
 ```
 
-L’ancien lancement hors Docker est conservé avec `.\start-local.ps1` : il nécessite Python 3.10+ et Node.js 22+, et sert l’application sur **http://127.0.0.1:8000** au premier plan.
+La cible de déploiement en ligne est Linux. Les anciens lanceurs PowerShell ont été retirés ; la CI utilise les mêmes commandes Docker que ci-dessus.
 
 Le mode **Demo trip** fonctionne sans API externe pour les itinéraires et la météo : trois tracés routiers OSRM enregistrés entre Chicago et Detroit et un front météo simulé déterministe. Les fonds cartographiques et la police web nécessitent Internet ; les tracés, les calculs et la police de secours restent disponibles sans ces ressources. **Ce mode ne présente jamais sa météo comme une prévision réelle.**
 
@@ -102,11 +104,13 @@ Les tests backend couvrent les bornes et les charges exactes, les unités, les d
 
 ## Déploiement
 
+Pour la mise en ligne Linux avec **deux services distincts**, suivre [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). Les configurations Railway sont fournies dans `deploy/railway/` ; elles utilisent les Dockerfiles propres au backend et au frontend.
+
 ### Docker Compose : deux services
 
 `compose.yaml` démarre **frontend** (React compilé servi par Nginx) et **backend** (Django/Gunicorn). Nginx sert l’interface et transmet `/api/` au backend sur le réseau Docker. Aucun CORS ni serveur Vite n’est nécessaire. Le backend attend une clé d’application, et le frontend attend que son contrôle de santé réussisse. Aucune base de données n’est requise.
 
-Si vous utilisez Compose directement, sans `start.ps1`, copier `.env.example` vers `.env` au premier lancement, remplacer `DJANGO_SECRET_KEY` par une valeur aléatoire et adapter les variables utiles. Le lanceur PowerShell prépare ce fichier automatiquement. `.env` est ignoré par Git et exclu du contexte de construction Docker. Compose le charge automatiquement ; Python/Django lancé directement ne le charge pas.
+Copier `.env.example` vers `.env` au premier lancement, remplacer `DJANGO_SECRET_KEY` par une valeur aléatoire et adapter les variables utiles. Ne pas écraser un `.env` déjà configuré. `.env` est ignoré par Git et exclu du contexte de construction Docker. Compose le charge automatiquement ; Python/Django lancé directement ne le charge pas.
 
 ```powershell
 docker compose up -d --build --wait
@@ -125,7 +129,7 @@ Les images sont reconstruites sans montage du code source. Les contrôles de san
 
 ### Image unique : Render ou hébergement autonome
 
-Le **Dockerfile multi-stage** à la racine conserve aussi une image complète par défaut : compilation React, installation Django, collecte statique, lancement Gunicorn sous un utilisateur sans privilèges. Le stage `backend` est utilisé uniquement pour le service API de Compose.
+Le **Dockerfile multi-stage** à la racine conserve une variante complète pour un hébergeur à service unique : compilation React, installation Django, collecte statique, lancement Gunicorn sous un utilisateur sans privilèges. Cette variante historique n'est utilisée ni par Compose ni par le déploiement Railway à deux services.
 
 ```powershell
 docker build -t spotter .

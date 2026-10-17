@@ -11,6 +11,15 @@ if not DEBUG and SECRET_KEY == "local-development-only-change-in-production":
 ALLOWED_HOSTS = os.getenv(
     "DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,testserver"
 ).split(",")
+ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
+for hostname_variable in (
+    "RAILWAY_PUBLIC_DOMAIN",
+    "RAILWAY_PRIVATE_DOMAIN",
+    "RENDER_EXTERNAL_HOSTNAME",
+):
+    hostname = os.getenv(hostname_variable)
+    if hostname and hostname not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(hostname)
 INSTALLED_APPS = ["django.contrib.staticfiles", "routing"]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

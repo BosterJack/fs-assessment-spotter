@@ -3,12 +3,11 @@ services:
   backend:
     build:
       context: .
-      dockerfile: Dockerfile
-      target: backend
+      dockerfile: backend/Dockerfile
     environment:
       DJANGO_DEBUG: "false"
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Set DJANGO_SECRET_KEY in .env}
-      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1},backend
       ORS_API_KEY: ${ORS_API_KEY:-}
       OSRM_URL: ${OSRM_URL:-https://router.project-osrm.org}
       WEATHER_URL: ${WEATHER_URL:-https://api.open-meteo.com/v1/forecast}

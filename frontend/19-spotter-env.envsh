@@ -1,0 +1,22 @@
+#!/bin/sh
+set -e
+
+export PORT="${PORT:-80}"
+export BACKEND_UPSTREAM="${BACKEND_UPSTREAM:-http://backend:8000}"
+export NGINX_ENVSUBST_FILTER='^(PORT|BACKEND_UPSTREAM|DNS_RESOLVER)$'
+
+case "$PORT" in ''|*[!0-9]*) echo 'PORT must be numeric' >&2; exit 1;; esac
+if [ "$PORT" -lt 1 ] || [ "$PORT" -gt 65535 ]; then
+    echo 'PORT must be between 1 and 65535' >&2
+    exit 1
+fi
+case "$BACKEND_UPSTREAM" in
+    http://*|https://*) ;;
+    *) echo 'BACKEND_UPSTREAM must be an HTTP(S) origin' >&2; exit 1;;
+esac
+
+if [ -z "${DNS_RESOLVER:-}" ]; then
+    DNS_RESOLVER="$(awk '$1 == "nameserver" {print $2; exit}' /etc/resolv.conf)"
+    case "$DNS_RESOLVER" in *:*) DNS_RESOLVER="[$DNS_RESOLVER]";; esac
+fi
+export DNS_RESOLVER
