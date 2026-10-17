@@ -3,11 +3,32 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
 from django.core.cache import cache
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, override_settings
 
 from .geometry import METERS_PER_MILE, sample_route
 from .providers import ProviderError, weather_at
 from .risk import classify, summarize, recommend
+
+
+class BackendIndexTests(SimpleTestCase):
+    @override_settings(TEMPLATES=[{
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "OPTIONS": {"loaders": [("django.template.loaders.locmem.Loader", {})]},
+    }])
+    def test_api_image_root_without_frontend_build(self):
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "ok")
+
+    @override_settings(TEMPLATES=[{
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "OPTIONS": {"loaders": [("django.template.loaders.locmem.Loader", {
+            "index.html": "<html>React build</html>",
+        })]},
+    }])
+    def test_combined_image_root_keeps_frontend(self):
+        response = self.client.get("/")
+        self.assertContains(response, "React build")
 
 
 class RiskTests(SimpleTestCase):
