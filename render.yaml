@@ -1,8 +1,10 @@
 services:
   - type: web
-    name: spotter-routing
+    name: spotter-backend
     runtime: docker
     plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
     healthCheckPath: /api/health/
     envVars:
       - key: DJANGO_DEBUG
@@ -10,4 +12,16 @@ services:
       - key: DJANGO_SECRET_KEY
         generateValue: true
       - key: DJANGO_ALLOWED_HOSTS
+        value: localhost,127.0.0.1
+  - type: web
+    name: spotter-frontend
+    runtime: docker
+    plan: free
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: .
+    healthCheckPath: /healthz
+    envVars:
+      - key: PORT
+        value: "10000"
+      - key: BACKEND_UPSTREAM
         sync: false

@@ -104,7 +104,7 @@ Les tests backend couvrent les bornes et les charges exactes, les unités, les d
 
 ## Déploiement
 
-Pour la mise en ligne Linux avec **deux services distincts**, suivre [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). Les configurations Railway sont fournies dans `deploy/railway/` ; elles utilisent les Dockerfiles propres au backend et au frontend.
+Pour la mise en ligne Linux avec **deux services distincts**, suivre [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). `render.yaml` définit deux services Docker Render gratuits ; les configurations Railway alternatives sont dans `deploy/railway/`.
 
 ### Docker Compose : deux services
 
@@ -127,7 +127,7 @@ docker compose down
 
 Les images sont reconstruites sans montage du code source. Les contrôles de santé vérifient Django et Nginx ; les conteneurs redémarrent en cas d’arrêt inattendu. Les plafonds mémoire locaux sont 256 Mio pour Django et 128 Mio pour Nginx. Sur une machine modeste, construire les services séparément avec `docker compose build backend`, puis `docker compose build frontend`.
 
-### Image unique : Render ou hébergement autonome
+### Image unique : variante pour hébergement autonome
 
 Le **Dockerfile multi-stage** à la racine conserve une variante complète pour un hébergeur à service unique : compilation React, installation Django, collecte statique, lancement Gunicorn sous un utilisateur sans privilèges. Cette variante historique n'est utilisée ni par Compose ni par le déploiement Railway à deux services.
 
@@ -138,7 +138,7 @@ docker run --rm -p 8000:8000 --env-file .env spotter
 
 En production : `DJANGO_DEBUG=false`, `DJANGO_SECRET_KEY` aléatoire, `DJANGO_ALLOWED_HOSTS` correspondant exactement au domaine (sans protocole), HTTPS au niveau de l’hébergeur. `PORT` est pris en charge. `/api/health/` sert au contrôle de disponibilité.
 
-Le fichier `render.yaml` prépare un déploiement Docker sur Render. Après création du dépôt GitHub, créer un Blueprint à partir de ce dépôt, renseigner `DJANGO_ALLOWED_HOSTS` avec le domaine attribué et laisser `ORS_API_KEY` vide pour OSRM. Les offres et conditions d’hébergement doivent être vérifiées au moment du déploiement. La limite par IP et le cache sont locaux au processus ; pour un service public à grande échelle, utiliser un cache partagé et une limitation au niveau du proxy.
+Le fichier `render.yaml` prépare deux services Docker sur Render. Renseigner `BACKEND_UPSTREAM` du frontend avec l’URL HTTPS réellement attribuée au backend et laisser `ORS_API_KEY` vide pour OSRM. Django autorise automatiquement son domaine Render. La limite par IP et le cache sont locaux au processus ; pour un service public à grande échelle, utiliser un cache partagé et une limitation au niveau du proxy.
 
 **GitHub** : [BosterJack/fs-assessment-spotter](https://github.com/BosterJack/fs-assessment-spotter). La pipeline vérifie Django, le build React, les tests navigateur et l’intégration Docker. L’URL d’hébergement public et l’enregistrement Loom restent à fournir. Le scénario de vidéo est dans [docs/WALKTHROUGH.md](docs/WALKTHROUGH.md).
 
