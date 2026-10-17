@@ -26,7 +26,8 @@ jobs:
       - run: npm run test:e2e
         working-directory: frontend
       - name: Build and start Docker services
-        run: docker compose up -d --build --wait --wait-timeout 90
+        shell: pwsh
+        run: ./start.ps1 -Rebuild
         env:
           DJANGO_SECRET_KEY: ci-only-secret-not-used-in-production-spotter
       - name: Verify Nginx and Django integration

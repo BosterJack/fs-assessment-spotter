@@ -6,14 +6,24 @@ Application du test **Full Stack Developer / Weather-Aware Truck Routing** : fro
 
 ## Démarrage rapide sous Windows
 
-Prérequis : Python 3.10+ et Node.js 22+.
+Prérequis : **Docker Desktop avec Docker Compose**. Python et Node.js ne sont pas nécessaires sur Windows pour ce lancement.
 
 ```powershell
 cd E:\Project\fs-assessment-spotter
 .\start.ps1
 ```
 
-Ouvrir **http://127.0.0.1:8000**. Ce script installe les dépendances, compile React, collecte les fichiers statiques et démarre Django au premier plan. Ctrl+C arrête le serveur. Si un autre serveur utilise déjà le port 8000, l’arrêter d’abord.
+Ouvrir **http://127.0.0.1:8080** (ou le port `FRONTEND_PORT` de `.env`). Le script crée `.env` avec une clé aléatoire si ce fichier n’existe pas, tente de démarrer Docker Desktop si nécessaire, puis lance React/Nginx et Django/Gunicorn avec Docker Compose. Il attend que les deux services soient sains avant d’afficher l’URL. Le fichier `.env` existant est conservé et ses secrets ne sont pas affichés.
+
+Les conteneurs fonctionnent en arrière-plan après la fin du script. Les images sont construites automatiquement au premier lancement, puis réutilisées ; les constructions sont séquentielles par défaut pour limiter la mémoire utilisée. Après modification du code, reconstruire explicitement :
+
+```powershell
+.\start.ps1 -Rebuild
+docker compose logs -f
+docker compose down
+```
+
+L’ancien lancement hors Docker est conservé avec `.\start-local.ps1` : il nécessite Python 3.10+ et Node.js 22+, et sert l’application sur **http://127.0.0.1:8000** au premier plan.
 
 Le mode **Demo trip** fonctionne sans API externe pour les itinéraires et la météo : trois tracés routiers OSRM enregistrés entre Chicago et Detroit et un front météo simulé déterministe. Les fonds cartographiques et la police web nécessitent Internet ; les tracés, les calculs et la police de secours restent disponibles sans ces ressources. **Ce mode ne présente jamais sa météo comme une prévision réelle.**
 
@@ -96,7 +106,7 @@ Les tests backend couvrent les bornes et les charges exactes, les unités, les d
 
 `compose.yaml` démarre **frontend** (React compilé servi par Nginx) et **backend** (Django/Gunicorn). Nginx sert l’interface et transmet `/api/` au backend sur le réseau Docker. Aucun CORS ni serveur Vite n’est nécessaire. Le backend attend une clé d’application, et le frontend attend que son contrôle de santé réussisse. Aucune base de données n’est requise.
 
-Au premier lancement seulement, copier `.env.example` vers `.env`, remplacer `DJANGO_SECRET_KEY` par une valeur aléatoire et adapter les variables utiles. `.env` est ignoré par Git et exclu du contexte de construction Docker. Compose le charge automatiquement ; Python/Django lancé directement ne le charge pas.
+Si vous utilisez Compose directement, sans `start.ps1`, copier `.env.example` vers `.env` au premier lancement, remplacer `DJANGO_SECRET_KEY` par une valeur aléatoire et adapter les variables utiles. Le lanceur PowerShell prépare ce fichier automatiquement. `.env` est ignoré par Git et exclu du contexte de construction Docker. Compose le charge automatiquement ; Python/Django lancé directement ne le charge pas.
 
 ```powershell
 docker compose up -d --build --wait

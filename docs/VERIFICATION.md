@@ -22,3 +22,7 @@ Une configuration Docker Compose sépare maintenant React/Nginx et Django/Gunico
 Le dépôt privé est [BosterJack/fs-assessment-spotter](https://github.com/BosterJack/fs-assessment-spotter). Aucun déploiement public ni enregistrement Loom n’a été créé.
 
 **Validation Docker sur GitHub Actions : réussie.** [Exécution 38946660290](https://github.com/BosterJack/fs-assessment-spotter/actions/runs/38946660290) : tests Django, build React, scénarios navigateur, construction des deux images, contrôles de santé et test d’intégration Nginx → Django. La limite du moteur Docker local n’empêche donc plus la validation des images et du parcours conteneurisé.
+
+## Lanceur Docker — 17 octobre 2026
+
+`start.ps1` lance désormais Docker Compose par défaut ; `start-local.ps1` conserve le démarrage Python/Node hors conteneurs. Vérifications locales sous Windows PowerShell 5 : démarrage automatique de Docker Desktop depuis un moteur arrêté, construction des images, deux services sains, second lancement avec réutilisation des images et test `scripts/smoke-docker.py` réussi. La CI utilise maintenant `./start.ps1 -Rebuild` avec PowerShell pour vérifier le même point d’entrée. Les constructions sont explicitement exécutées service par service et le lancement final interdit les builds implicites parallèles.
